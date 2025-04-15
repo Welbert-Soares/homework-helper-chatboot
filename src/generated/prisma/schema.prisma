@@ -1,0 +1,82 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String         @id @default(uuid())
+  email         String         @unique
+  name          String
+  createdAt     DateTime       @default(now()) @map("created_at")
+  weaknesses    String[]       @map("weak_areas")
+  conversations Conversation[]
+  quizzes       Quiz[]
+
+  @@map("users")
+}
+
+model Conversation {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  message Message[]
+
+  @@map("conversations")
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  conversationId String
+
+  role String
+
+  improvements Correction?
+
+  @@map("messages")
+}
+
+model Correction {
+  id        String @id @default(cuid())
+  original  String
+  corrected String
+  focus     String
+
+  message   Message @relation(fields: [messageId], references: [id])
+  messageId String  @unique
+}
+
+model Quiz {
+  id        String     @id @default(cuid())
+  user      User       @relation(fields: [userId], references: [id])
+  userId    String
+  topic     String     @default("")
+  questions Question[]
+}
+
+model Question {
+  id      String   @id @default(cuid())
+  text    String
+  quiz    Quiz     @relation(fields: [quizId], references: [id])
+  quizId  String
+  answers Answer[]
+}
+
+model Answer {
+  id         String   @id @default(cuid())
+  text       String
+  question   Question @relation(fields: [questionId], references: [id])
+  questionId String
+  correct    Boolean
+}
