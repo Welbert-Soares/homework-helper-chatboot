@@ -2,7 +2,7 @@
 
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 
-import db from "@/lib/prisma";
+import { db } from "@/lib/prisma";
 
 export const verifyUser = async () => {
   try {
