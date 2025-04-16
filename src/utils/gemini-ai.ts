@@ -29,13 +29,11 @@ export async function continueConversation(
   message: string
 ) {
   try {
-    // Convert application messages to Gemini format
     const historyMessages = messages.map((msg) => ({
       role: msg.role === "user" ? "user" : "model",
       parts: [{ text: msg.content }],
     }));
 
-    // Initialize chat with existing conversation history
     const chat = model.startChat({
       generationConfig,
       history: historyMessages,
@@ -59,7 +57,6 @@ export async function continueConversation(
       ],
     });
 
-    // Create instructions that specifically prevent Markdown formatting
     const enhancedPrompt = `${message}
 
 <SYSTEM_INSTRUCTION>
@@ -86,12 +83,10 @@ REGRAS DE COMPORTAMENTO:
 Lembre-se: Você é um assistente de ensino de inglês para brasileiros. Todas as suas instruções devem ser em português, apenas os exemplos e palavras que está ensinando devem ser em inglês. Use texto simples sem formatação especial.
 </SYSTEM_INSTRUCTION>`;
 
-    // Send the enhanced user message with strong system instructions
     const result = await chat.sendMessage(enhancedPrompt);
     const response = await result.response;
     const text = response.text();
 
-    // Format response for the application
     const parsedResponse = messageSchema.parse({
       role: "assistant",
       content: text,
