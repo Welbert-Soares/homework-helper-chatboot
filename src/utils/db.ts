@@ -47,3 +47,69 @@ export async function sendMessageToDB(
     return undefined;
   }
 }
+
+export async function saveGrammarImprovements(
+  messageId: string,
+  correction: {
+    original: string;
+    corrected: string;
+    focus: string;
+  }
+) {
+  try {
+    const { getUser } = await getKindeServerSession();
+    const user = await getUser();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const message = await db.message.findUnique({
+      where: { id: messageId },
+    });
+
+    if (!message) {
+      throw new Error("Message not found");
+    }
+
+    const createCorrection = await db.correction.create({
+      data: {
+        ...correction,
+        messageId,
+      },
+    });
+
+    const updateMessage = await db.message.update({
+      where: {
+        id: messageId,
+      },
+      data: {
+        improvements: {
+          connect: {
+            id: createCorrection.id,
+          },
+        },
+      },
+    });
+
+    if (!updateMessage) {
+      throw new Error("Message not found");
+    }
+
+    await db.user.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        weaknesses: {
+          push: correction.focus,
+        },
+      },
+    });
+
+    revalidatePath(`/chat/${updateMessage.conversationId}`);
+  } catch (error) {
+    console.error("Error saving grammar improvements:", error);
+    throw new Error("Failed to save grammar improvements");
+  }
+}

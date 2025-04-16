@@ -13,8 +13,11 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 import { cn } from "@/lib/utils";
-import { sendMessageToDB } from "@/utils/db";
-import { continueConversation } from "@/utils/gemini-ai";
+import { saveGrammarImprovements, sendMessageToDB } from "@/utils/db";
+import {
+  continueConversation,
+  findGrammarImprovements,
+} from "@/utils/gemini-ai";
 
 interface IChat {
   initialMessages: Message[];
@@ -66,11 +69,20 @@ const Chat = ({ initialMessages, conversationId }: IChat) => {
         ]);
       }
 
-      const [newMessage] = await Promise.all([
+      const [newMessage, correction] = await Promise.all([
         sendMessageToDB(currentMessage, conversationId, "user"),
+        findGrammarImprovements(currentMessage),
       ]);
 
       if (!newMessage) return;
+
+      if (
+        correction &&
+        newMessage &&
+        newMessage.content !== "Nenhum erro gramatical encontrado"
+      ) {
+        await saveGrammarImprovements(newMessage.id, correction);
+      }
 
       setMessages((prev) => {
         const filtered = prev.filter(
