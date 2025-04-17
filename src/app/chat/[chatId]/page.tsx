@@ -4,7 +4,8 @@ import { Chat } from "@/components/Chat";
 import { MaxWidthWrapper } from "@/components/common/MaxWidthWrapper";
 
 import { db } from "@/lib/prisma";
-import { GrammarImprovement } from "@/components/GrammarImprovement";
+import { GrammarImprovements } from "@/components/GrammarImprovements";
+import { Correction } from "@/generated/prisma";
 
 interface IParams {
   params: {
@@ -41,7 +42,13 @@ const page = async ({ params }: IParams) => {
           <Chat initialMessages={chat?.message || []} conversationId={chatId} />
         </div>
         <div className="grid col-span-1 md:col-span-4">
-          <GrammarImprovement />
+          <GrammarImprovements
+            improvements={
+              chat.message
+                .map((message) => message.improvements)
+                .filter(Boolean) as Correction[]
+            }
+          />
         </div>
       </div>
     </MaxWidthWrapper>
